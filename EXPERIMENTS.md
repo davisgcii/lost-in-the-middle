@@ -240,6 +240,26 @@ Note: all of these experiments were run on one or more A100 GPUs with 80GB of
 VRAM. You may need to modify commands to fit your own computing environment
 (e.g., changing the batch size, the max memory per GPU, the number of GPUs, etc)
 
+## gpt-4-turbo
+
+To run `gpt-4-turbo` on key-value retrieval, use
+[`./scripts/get_kv_responses_from_gpt4turbo.py`](./scripts/get_kv_responses_from_gpt4turbo.py).
+Below are commands for running `gpt-4-turbo` on different KV retrieval
+settings.
+
+### gpt-4-turbo with 75 total key-value pairs
+
+Getting predictions:
+
+```
+for gold_index in 0 24 49 74; do
+    python -u ./scripts/get_kv_responses_from_gpt4turbo.py \
+        --input-path kv_retrieval_data/kv-retrieval-75_keys.jsonl.gz \
+        --gold-index ${gold_index} \
+        --output-path kv_predictions/kv-retrieval-75_keys_gold_at_${gold_index}-gpt4turbo-instruct-predictions.jsonl.gz
+done
+```
+
 ## mpt-30b-instruct
 
 To run `mpt-30b` and `mpt-30b-instruct` on key-value retrieval, use

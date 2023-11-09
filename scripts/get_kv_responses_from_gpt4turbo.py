@@ -13,6 +13,7 @@ import sys
 from copy import deepcopy
 
 from dotenv import load_dotenv
+from fastchat.model import get_conversation_template
 from openai import OpenAI
 from tqdm import tqdm
 from xopen import xopen
@@ -32,11 +33,8 @@ def main(
     model_name,
     temperature,
     top_p,
-    batch_size,
     gold_index,
-    max_memory_per_gpu,
     query_aware_contextualization,
-    max_new_tokens,
     output_path,
 ):
     # Create directory for output path if it doesn't exist.
@@ -65,7 +63,7 @@ def main(
                 data=ordered_kv_records, key=key, query_aware_contextualization=query_aware_contextualization
             )
 
-            if "chat" in model_name:
+            if "chat" in model_name:  # TODO: check and see if this is the right way to do this
                 if did_format_warn is False:
                     logger.warning(f"Model {model_name} appears to be an chat model, applying chat formatting")
                     did_format_warn = True
@@ -77,33 +75,10 @@ def main(
     # Get responses for all of the prompts
     responses = []
 
-    for batched_prompts in tqdm(chunks(prompts, batch_size), total=math.ceil(len(prompts) / batch_size)):
-        inputs = tokenizer(batched_prompts, return_tensors="pt", padding=True).to(model.device)
-        outputs = model.generate(
-            **inputs,
-            max_new_tokens=max_new_tokens,
-            do_sample=do_sample,
-            temperature=temperature if do_sample else None,
-            top_p=top_p if do_sample else None,
-            # Disable use_cache if using longchat models with flash attention
-            use_cache=not ("longchat" in model_name and longchat_flash_attn),
-        )
-        for i, generated_sequence in enumerate(outputs):
-            input_ids = inputs["input_ids"][i]
-            text = tokenizer.decode(generated_sequence, skip_special_tokens=True, clean_up_tokenization_spaces=True)
-
-            if input_ids is None:
-                prompt_length = 0
-            else:
-                prompt_length = len(
-                    tokenizer.decode(
-                        input_ids,
-                        skip_special_tokens=True,
-                        clean_up_tokenization_spaces=True,
-                    )
-                )
-            new_text = text[prompt_length:]
-            responses.append(new_text)
+    for prompt in tqdm(prompts):
+        completion = getCompletion(prompt=prompt, temperature=temperature, top_p=top_p)
+        print(f"Prompt: {prompt}\nCompletion: {completion}\n\n")  # TODO: remove this
+        responses.append(completion)
 
     with xopen(output_path, "w") as f:
         for example, ordered_kv_records, prompt, response in zip(
@@ -120,9 +95,62 @@ def main(
             f.write(json.dumps(output_example) + "\n")
 
 
-def getCompletion(prompt):
+def getCompletion(prompt, temperature=1.0, top_p=1.0):
     completion = client.chat.completions.create(
         model="gpt-4-1106-preview",
-        messages=[{"role": "system", "content": "You are a helpful assistant."}, {"role": "user", "content": "Hello!"}],
+        temperature=temperature,
+        top_p=top_p,
+        messages=[{"role": "system", "content": "You are a helpful assistant."}, {"role": "user", "content": prompt}],
     )
-    return completion.choices[0].message
+    return completion.choices[0].message.content
+
+
+def chunks(lst, n):
+    """Yield successive n-sized chunks from lst."""
+    for i in range(0, len(lst), n):
+        yield lst[i : i + n]
+
+
+def format_chat_prompt(input):
+    conv = get_conversation_template("vicuna")
+    conv.append_message(conv.roles[0], input)
+    conv.append_message(conv.roles[1], None)
+    prompt = conv.get_prompt()
+    return prompt
+
+
+def format_chat_prompt(input):
+    conv = get_conversation_template("vicuna")
+    conv.append_message(conv.roles[0], input)
+    conv.append_message(conv.roles[1], None)
+    prompt = conv.get_prompt()
+    return prompt
+
+
+if __name__ == "__main__":
+    logging.basicConfig(format="%(asctime)s - %(module)s - %(levelname)s - %(message)s", level=logging.INFO)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--input-path", help="Path to data with questions and documents to use.", required=True)
+    parser.add_argument("--model", help="Model to use in generating responses", required=True)
+    parser.add_argument("--temperature", help="Temperature to use in generation", type=float, default=1.0)
+    parser.add_argument("--top-p", help="Top-p to use in generation", type=float, default=1.0)
+    parser.add_argument("--output-path", help="Path to write output file of generated responses", required=True)
+    parser.add_argument("--gold-index", help="Move the key to retrieve to this index", type=int, required=True)
+    parser.add_argument(
+        "--query-aware-contextualization",
+        action="store_true",
+        help="Place the question both before and after the documents.",
+    )
+    args = parser.parse_args()
+
+    logger.info("running %s", " ".join(sys.argv))
+    main(
+        args.input_path,
+        args.model,
+        args.temperature,
+        args.top_p,
+        args.gold_index,
+        args.query_aware_contextualization,
+        args.output_path,
+    )
+    logger.info("finished running %s", sys.argv[0])
