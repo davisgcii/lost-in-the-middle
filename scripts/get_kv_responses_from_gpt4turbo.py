@@ -5,8 +5,6 @@ The KV records are used in the exact order that they're given.
 import argparse
 import json
 import logging
-import math
-import openai
 import pathlib
 import random
 import sys
