@@ -16,7 +16,7 @@ from openai import OpenAI
 from tqdm import tqdm
 from xopen import xopen
 
-from lost_in_the_middle.prompting import get_kv_retrieval_prompt
+from src.lost_in_the_middle.prompting import get_kv_retrieval_prompt
 
 load_dotenv()
 
@@ -28,8 +28,8 @@ client = OpenAI()
 
 def main(
     input_path,
-    model_name,
     temperature,
+    model_name,
     top_p,
     gold_index,
     query_aware_contextualization,
@@ -61,11 +61,11 @@ def main(
                 data=ordered_kv_records, key=key, query_aware_contextualization=query_aware_contextualization
             )
 
-            if "chat" in model_name:  # TODO: check and see if this is the right way to do this
-                if did_format_warn is False:
-                    logger.warning(f"Model {model_name} appears to be an chat model, applying chat formatting")
-                    did_format_warn = True
-                kv_prompt = format_chat_prompt(kv_prompt)
+            # if "chat" in model_name:  # TODO: check and see if this is the right way to do this
+            #     if did_format_warn is False:
+            #         logger.warning(f"Model {model_name} appears to be an chat model, applying chat formatting")
+            #         did_format_warn = True
+            #     kv_prompt = format_chat_prompt(kv_prompt)
             prompts.append(kv_prompt)
             examples.append(deepcopy(input_example))
             all_model_ordered_kv_records.append(ordered_kv_records)
@@ -75,7 +75,7 @@ def main(
 
     for prompt in tqdm(prompts):
         completion = getCompletion(prompt=prompt, temperature=temperature, top_p=top_p)
-        print(f"Prompt: {prompt}\nCompletion: {completion}\n\n")  # TODO: remove this
+        # print(f"Prompt: {prompt}\nCompletion: {completion}\n\n")  # TODO: remove this
         responses.append(completion)
 
     with xopen(output_path, "w") as f:
@@ -100,6 +100,7 @@ def getCompletion(prompt, temperature=1.0, top_p=1.0):
         top_p=top_p,
         messages=[{"role": "system", "content": "You are a helpful assistant."}, {"role": "user", "content": prompt}],
     )
+    # print(completion.choices[0].message.content)
     return completion.choices[0].message.content
 
 
@@ -129,11 +130,11 @@ if __name__ == "__main__":
     logging.basicConfig(format="%(asctime)s - %(module)s - %(levelname)s - %(message)s", level=logging.INFO)
     parser = argparse.ArgumentParser()
     parser.add_argument("--input-path", help="Path to data with questions and documents to use.", required=True)
-    parser.add_argument("--model", help="Model to use in generating responses", required=True)
     parser.add_argument("--temperature", help="Temperature to use in generation", type=float, default=1.0)
     parser.add_argument("--top-p", help="Top-p to use in generation", type=float, default=1.0)
     parser.add_argument("--output-path", help="Path to write output file of generated responses", required=True)
     parser.add_argument("--gold-index", help="Move the key to retrieve to this index", type=int, required=True)
+    parser.add_argument("--model", help="Model name", required=True)
     parser.add_argument(
         "--query-aware-contextualization",
         action="store_true",
@@ -144,8 +145,8 @@ if __name__ == "__main__":
     logger.info("running %s", " ".join(sys.argv))
     main(
         args.input_path,
-        args.model,
         args.temperature,
+        args.model,
         args.top_p,
         args.gold_index,
         args.query_aware_contextualization,

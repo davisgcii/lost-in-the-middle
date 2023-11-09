@@ -4,6 +4,8 @@
 import argparse
 import json
 import logging
+import matplotlib.pyplot as plt
+import os
 import statistics
 import sys
 from copy import deepcopy
@@ -40,7 +42,7 @@ def main(input_path, output_path):
 
     if output_path:
         with xopen(output_path, "w") as f:
-            for (example_metrics, example) in all_example_metrics:
+            for example_metrics, example in all_example_metrics:
                 example_with_metrics = deepcopy(example)
                 for metric_name, metric_value in example_metrics.items():
                     example_with_metrics[f"metric_{metric_name}"] = metric_value
