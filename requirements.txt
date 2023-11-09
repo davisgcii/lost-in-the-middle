@@ -1,24 +1,15 @@
-tqdm
-xopen
-pydantic
-pytest
-
-# For running longchat locally
-longchat@git+https://github.com/DachengLi1/LongChat.git@43d71f03d7711a2ab3b78ee8d1e38b65bb7fd22f
-
-# For running MPT locally
-transformers
-torch
-einops
-flash-attn==1.0.5
-triton-pre-mlir@git+https://github.com/vchiley/triton.git@triton_pre_mlir#subdirectory=python
-accelerate
-
-# Checks style, syntax, and other useful errors.
-flake8==5.0.4
-
-# Automatic code formatting
-black==22.10.0
-
-# For creating git precommit hooks
-pre-commit
+annotated-types==0.6.0
+anyio==3.7.1
+certifi==2023.7.22
+distro==1.8.0
+h11==0.14.0
+httpcore==1.0.1
+httpx==0.25.1
+idna==3.4
+openai==1.1.2
+pydantic==2.4.2
+pydantic_core==2.10.1
+python-dotenv==1.0.0
+sniffio==1.3.0
+tqdm==4.66.1
+typing_extensions==4.8.0
