@@ -8,6 +8,7 @@ import logging
 import pathlib
 import random
 import sys
+import time
 from copy import deepcopy
 
 from dotenv import load_dotenv
@@ -100,7 +101,10 @@ def getCompletion(prompt, temperature=1.0, top_p=1.0):
         top_p=top_p,
         messages=[{"role": "system", "content": "You are a helpful assistant."}, {"role": "user", "content": prompt}],
     )
-    # print(completion.choices[0].message.content)
+    # print(
+    #     f"Prompt tokens: {completion.usage.prompt_tokens}\nCompletion tokens: {completion.usage.completion_tokens}\nTotal tokens: {completion.usage.total_tokens}\n\n"
+    # )
+    time.sleep(100)  # so that we don't get rate limited at 80k tokens / min :(
     return completion.choices[0].message.content
 
 

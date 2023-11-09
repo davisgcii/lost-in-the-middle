@@ -39,6 +39,7 @@ def main(input_path, output_path):
             example_metrics[metric_name] for (example_metrics, _) in all_example_metrics
         )
         logger.info(f"{metric_name}: {average_metric_value}")
+        print(average_metric_value)
 
     if output_path:
         with xopen(output_path, "w") as f:

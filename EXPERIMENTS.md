@@ -258,12 +258,24 @@ or even `...keys_shortest.jsonl.gz`.
 Getting predictions:
 
 ```
-for gold_index in 0 24 49 74; do
+for gold_index in 0 34 74; do
     python -u ./scripts/get_kv_responses_from_gpt4turbo.py \
         --input-path kv_retrieval_data/kv-retrieval-75_keys_shortest.jsonl.gz \
         --gold-index ${gold_index} \
         --model gpt-4-1106-preview \
         --output-path kv_predictions/kv-retrieval-75_keys_gold_at_${gold_index}-gpt4turbo-predictions.jsonl.gz
+done
+```
+
+For getting predictions for larger groups of kv-pairs:
+
+```
+for gold_index in 0 624 1249 1874 2499; do
+    python -u ./scripts/get_kv_responses_from_gpt4turbo.py \
+        --input-path kv_retrieval_data/kv-retrieval-2500_keys.jsonl.gz \
+        --gold-index ${gold_index} \
+        --model gpt-4-1106-preview \
+        --output-path kv_predictions/kv-retrieval-2500_keys_gold_at_${gold_index}-gpt4turbo-predictions.jsonl.gz
 done
 ```
 
@@ -274,6 +286,16 @@ for gold_index in 0 24 49 74; do
     python -u ./scripts/evaluate_kv_responses.py \
         --input-path kv_predictions/kv-retrieval-75_keys_gold_at_${gold_index}-gpt4turbo-predictions.jsonl.gz \
         --output-path kv_predictions/kv-retrieval-75_keys_gold_at_${gold_index}-gpt4turbo-predictions-scored.jsonl.gz
+done
+```
+
+For evaluating larger groups of kv-pairs:
+
+```
+for gold_index in 999; do
+    python -u ./scripts/evaluate_kv_responses.py \
+        --input-path kv_predictions/kv-retrieval-2500_keys_gold_at_${gold_index}-gpt4turbo-predictions.jsonl.gz \
+        --output-path kv_predictions/kv-retrieval-2500_keys_gold_at_${gold_index}-gpt4turbo-predictions-scored.jsonl.gz
 done
 ```
 
